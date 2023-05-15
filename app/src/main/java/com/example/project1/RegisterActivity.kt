@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button
 import android.widget.EditText;
+import android.widget.TextView
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -21,29 +22,101 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-
+private lateinit var etPassword: EditText;
+private lateinit var etUsername: EditText;
+private lateinit var username: String;
+private lateinit var password: String;
 class RegisterActivity : AppCompatActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        lateinit var etUsername: EditText
-        lateinit var etPassword: EditText
+    //private lateinit var etButton: Button;
 
-       // var etButton =   findViewById(R.id.btnRegister) as Button
+    override fun onCreate(savedInstanceState: Bundle?) {
+
+        //etButton = findViewById(R.id.btnRegister) as Button
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-       etUsername= findViewById(R.id.etRUserName) as EditText
-        etPassword= findViewById(R.id.etRPassword) as EditText
+        etUsername = findViewById(R.id.etRUserName)
+        etPassword = findViewById(R.id.etRPassword)
 
-        var register =   findViewById(R.id.btnRegister) as Button
+        var etButton = findViewById<Button>(R.id.btnRegister)
 
-        register.setOnClickListener{
-            val name = etUsername.getText().toString();
-            Toast.makeText( this,  "Has Registered Successfully", Toast.LENGTH_LONG).show()
 
+        etButton.setOnClickListener {
+            registerUser()
 
 
         }
+
+        this.findViewById<TextView>(R.id.tvLoginLink).setOnClickListener{
+            startActivity(Intent(this, LoginActivity::class.java))
+        }
+
+
+
+    }
+
+
+    //Code for registerUser() method
+    private fun registerUser() {
+        val userName: String = etUsername.getText().toString().trim()
+        val password: String = etPassword.getText().toString().trim()
+        if (userName.isEmpty()) {
+            etUsername.setError("Username is required")
+            etUsername.requestFocus()
+            return
+        } else if (password.isEmpty()) {
+            etPassword.setError("Password is required")
+            etPassword.requestFocus()
+            return
+        }
+        val call: Call<ResponseBody> = RetroFitClient
+            .getInstance()
+            .api
+            .createUser(User(userName, password))
+
+        call.enqueue(object : Callback<ResponseBody?> {
+                override fun onResponse(
+                    call: Call<ResponseBody?>?,
+                    response: Response<ResponseBody?>,
+                ) {
+                    var s = ""
+                    try {
+                        s = response.body()!!.string()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                    }
+                    if (s == "SUCCESS") {
+                        Toast.makeText(
+                            this@RegisterActivity,
+                            "Successfully registered. Please login",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                        startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
+                    } else {
+                        Toast.makeText(
+                            this@RegisterActivity,
+                            "User already exists!",
+                            Toast.LENGTH_LONG,
+                        )
+                            .show()
+                    }
+                }
+
+                override fun onFailure(call: Call<ResponseBody?>, t: Throwable) {
+                   Toast.makeText(this@RegisterActivity, t.message, Toast.LENGTH_LONG).show()
+                }
+            })
+
     }
 }
+
+
+
+            //fun onFailure(call: Call<ResponseBody?>, t: Throwable) {
+              //  TODO("Not yet implemented")
+            //}
+       // })
+    //}
+//}
